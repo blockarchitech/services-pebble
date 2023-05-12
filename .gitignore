@@ -1,0 +1,4 @@
+.lock-*
+pebble-wrapper.sh
+build/
+node_modules/
