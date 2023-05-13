@@ -3,3 +3,4 @@ pebble-wrapper.sh
 build/
 node_modules/
 package-lock.json
+devcreds.txt

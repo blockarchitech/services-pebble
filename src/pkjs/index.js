@@ -2,15 +2,12 @@ require("pebblejs");
 var UI = require("pebblejs/dist/js/ui");
 var ajax = require("pebblejs/dist/js/lib/ajax");
 var Settings = require("pebblejs/settings");
-var Clay = require("pebble-clay");
-var clayConfig = require("./config");
 const getServices = require("./libs/getServices");
 const confirm = require("./libs/confirm");
 const decline = require("./libs/decline");
-var clay = new Clay(clayConfig, null, {
-  autoHandleEvents: false
-});
-// https://apps.rebble.io/en_US/dev-settings?dev_settings=true
+
+
+
 function checkConf(thing) {
   if (thing == "C") {
     return "Confirmed";
@@ -20,24 +17,36 @@ function checkConf(thing) {
 }
 
 Pebble.addEventListener("showConfiguration", function (e) {
-  settings = JSON.parse(localStorage.getItem("clay-settings")) || {};
-  console.log("CURRENT SETTINGS: " + JSON.stringify(settings));
-  Pebble.openURL(clay.generateUrl());
+  var last4TTN = Pebble.getWatchToken();
+  var watchModel = Pebble.getActiveWatchInfo().model;
+  var url = `https://services-backend.blockarchitech.com/config?last4TTN=${last4TTN}&watchModel=${watchModel}`;
+  Pebble.openURL(url);
 });
 
 Pebble.addEventListener("webviewclosed", function (e) {
   if (e && !e.response) {
     return;
   }
-  var dict = clay.getSettings(e.response);
-  settings = JSON.parse(localStorage.getItem("clay-settings")) || {};
-  console.log("NEW SETTINGS: " + JSON.stringify(settings));
+  var dict = decodeURIComponent(e.response);
+  settings = dict
+  localStorage.setItem("clay-settings", settings);
+  console.log("NEW SETTINGS: " + settings);
   Settings.option(dict);
 });
 
 Pebble.addEventListener("ready", function (e) {
   // Get the initial configuration
   settings = JSON.parse(localStorage.getItem("clay-settings")) || {};
+
+  // Check if the user set sttings
+  if (Object.keys(settings).length === 0 || !settings.appId || !settings.appToken || !settings.userId || settings.appId === "" || settings.appToken === "" || settings.userId === "" || settings.appId === "1234567890" || settings.appToken === "1234567890" || settings.userId === "1234567890") {
+	// No settings found, show "Configure me!" message
+	var card = new UI.Card({
+		title: "Configure me!",
+		body: "Please open the Pebble app on your phone and set your settings."
+	});
+	card.show();
+  }
 
   // Main menu
   var today = [];
